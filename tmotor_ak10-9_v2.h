@@ -76,7 +76,7 @@ typedef struct
   /////////////////////////////
   //CAN BUS transmit
   uint8_t               txBuf[8];
-  uint32_t*             pTxMailbox;
+  uint32_t              txMailbox;
   CAN_TxHeaderTypeDef   txHeader;
   //CAN BUS receive
   uint8_t               rxBuf[8];

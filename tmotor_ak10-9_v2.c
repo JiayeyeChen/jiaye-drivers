@@ -68,7 +68,7 @@ void AK10_9_ServoMode_CurrentControl(AK10_9HandleCubeMarsFW* hmotor, float curre
   hmotor->txBuf[1] = temCurrent.b8[2];
   hmotor->txBuf[2] = temCurrent.b8[1];
   hmotor->txBuf[3] = temCurrent.b8[0];
-  HAL_CAN_AddTxMessage(hmotor->hcan, &hmotor->txHeader, hmotor->txBuf, hmotor->pTxMailbox);
+  HAL_CAN_AddTxMessage(hmotor->hcan, &hmotor->txHeader, hmotor->txBuf, &(hmotor->txMailbox));
 }
 
 //float speed: -10000epm~10000epm
@@ -86,7 +86,7 @@ void AK10_9_ServoMode_VelocityControl(AK10_9HandleCubeMarsFW* hmotor, float spee
   hmotor->txBuf[1] = temSPD.b8[2];
   hmotor->txBuf[2] = temSPD.b8[1];
   hmotor->txBuf[3] = temSPD.b8[0];
-  HAL_CAN_AddTxMessage(hmotor->hcan, &hmotor->txHeader, hmotor->txBuf, hmotor->pTxMailbox);
+  HAL_CAN_AddTxMessage(hmotor->hcan, &hmotor->txHeader, hmotor->txBuf, &(hmotor->txMailbox));
 }
 
 //float position: -3600deg~3600deg
@@ -104,7 +104,7 @@ void AK10_9_ServoMode_PositionControl(AK10_9HandleCubeMarsFW* hmotor, float posi
   hmotor->txBuf[1] = temPOS.b8[2];
   hmotor->txBuf[2] = temPOS.b8[1];
   hmotor->txBuf[3] = temPOS.b8[0];
-  HAL_CAN_AddTxMessage(hmotor->hcan, &hmotor->txHeader, hmotor->txBuf, hmotor->pTxMailbox);
+  HAL_CAN_AddTxMessage(hmotor->hcan, &hmotor->txHeader, hmotor->txBuf, &(hmotor->txMailbox));
 }
 
 void AK10_9_ServoMode_PositionSpeenControlCustomized(AK10_9HandleCubeMarsFW* hmotor, float position, float speed, float loop_duration)
@@ -161,7 +161,7 @@ void AK10_9_ServoMode_PositionSpeedControl(AK10_9HandleCubeMarsFW* hmotor, float
   hmotor->txBuf[6] = (uint8_t)((acceleration >> 8) & 0xFF);
   hmotor->txBuf[7] = (uint8_t)(acceleration * 0xFF);
   
-  HAL_CAN_AddTxMessage(hmotor->hcan, &hmotor->txHeader, hmotor->txBuf, hmotor->pTxMailbox);
+  HAL_CAN_AddTxMessage(hmotor->hcan, &hmotor->txHeader, hmotor->txBuf, &(hmotor->txMailbox));
 }
 
 void AK10_9_ServoMode_GetFeedbackMsg(CAN_RxHeaderTypeDef* rxheader, AK10_9HandleCubeMarsFW* hmotor, uint8_t rxbuf[])
@@ -223,7 +223,7 @@ void AK10_9_ServoMode_Zeroing(AK10_9HandleCubeMarsFW* hmotor)
   hmotor->txHeader.RTR = CAN_RTR_DATA;
   
   hmotor->txBuf[0] = 1;
-  HAL_CAN_AddTxMessage(hmotor->hcan, &hmotor->txHeader, hmotor->txBuf, hmotor->pTxMailbox);
+  HAL_CAN_AddTxMessage(hmotor->hcan, &hmotor->txHeader, hmotor->txBuf, &(hmotor->txMailbox));
 }
 
 void AK10_9_MITMode_EnableMotor(AK10_9HandleCubeMarsFW* hmotor)
@@ -240,7 +240,7 @@ void AK10_9_MITMode_EnableMotor(AK10_9HandleCubeMarsFW* hmotor)
   hmotor->txBuf[5] = 0xFF;
   hmotor->txBuf[6] = 0xFF;
   hmotor->txBuf[7] = 0xFC;
-  HAL_CAN_AddTxMessage(hmotor->hcan, &(hmotor->txHeader), hmotor->txBuf, hmotor->pTxMailbox);
+  HAL_CAN_AddTxMessage(hmotor->hcan, &(hmotor->txHeader), hmotor->txBuf, &(hmotor->txMailbox));
   
   AK10_9_CubeMarsFW_MITMode_ZeroingControlParameters(hmotor);
   hmotor->enablingStatus = AK10_9_MITMODE_ENABLED;
@@ -259,7 +259,7 @@ void AK10_9_MITMode_DisableMotor(AK10_9HandleCubeMarsFW* hmotor)
   hmotor->txBuf[5] = 0xFF;
   hmotor->txBuf[6] = 0xFF;
   hmotor->txBuf[7] = 0xFD;
-  HAL_CAN_AddTxMessage(hmotor->hcan, &(hmotor->txHeader), hmotor->txBuf, hmotor->pTxMailbox);
+  HAL_CAN_AddTxMessage(hmotor->hcan, &(hmotor->txHeader), hmotor->txBuf, &(hmotor->txMailbox));
   
   AK10_9_CubeMarsFW_MITMode_ZeroingControlParameters(hmotor);
   hmotor->enablingStatus = AK10_9_MITMODE_DISABLED;
@@ -279,7 +279,7 @@ void AK10_9_MITMode_Zeroing(AK10_9HandleCubeMarsFW* hmotor)
   hmotor->txBuf[5] = 0xFF;
   hmotor->txBuf[6] = 0xFF;
   hmotor->txBuf[7] = 0xFE;
-  HAL_CAN_AddTxMessage(hmotor->hcan, &(hmotor->txHeader), hmotor->txBuf, hmotor->pTxMailbox);
+  HAL_CAN_AddTxMessage(hmotor->hcan, &(hmotor->txHeader), hmotor->txBuf, &(hmotor->txMailbox));
 }
 
 void AK10_9_CubeMarsFW_MITMode_ZeroingControlParameters(AK10_9HandleCubeMarsFW* hmotor)
@@ -299,6 +299,10 @@ void AK10_9_CubeMarsFW_MITMode_ZeroingControlParameters(AK10_9HandleCubeMarsFW* 
 
 void AK10_9_MITModeControl_Deg(AK10_9HandleCubeMarsFW* hmotor, float pos, float vel, float kp, float kd, float iq)
 {
+  hmotor->txHeader.DLC = 8;
+  hmotor->txHeader.IDE = 0;
+  hmotor->txHeader.RTR = 0;
+  hmotor->txHeader.StdId = hmotor->canID;
   float KP_MIN = 0.0f;
   float KP_MAX = 500.0f;
   float KD_MIN = 0.0f;
@@ -327,7 +331,7 @@ void AK10_9_MITModeControl_Deg(AK10_9HandleCubeMarsFW* hmotor, float pos, float 
   hmotor->txBuf[5] = kdInt >> 4;
   hmotor->txBuf[6] = ((kdInt & 0x0F) << 4) | (iInt >> 8);
   hmotor->txBuf[7] = iInt & 0xFF;
-  HAL_CAN_AddTxMessage(hmotor->hcan, &(hmotor->txHeader), hmotor->txBuf, hmotor->pTxMailbox);
+  HAL_CAN_AddTxMessage(hmotor->hcan, &(hmotor->txHeader), hmotor->txBuf, &(hmotor->txMailbox));
 }
 
 void AK10_9_MITModeControl_Rad(AK10_9HandleCubeMarsFW* hmotor, float pos, float vel, float kp, float kd, float iq)
