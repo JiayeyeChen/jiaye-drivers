@@ -11,7 +11,7 @@ enum ServoMotorMode_CAN_PACKET_ID
   SERVO_CAN_PACKET_SET_POS_SPD
 };
 
-AK10_9HandleCubeMarsFW AK10_9_Create(CAN_HandleTypeDef* hcan, uint8_t can_id, float kt, float dir, \
+AK10_9HandleCubeMarsFW AK10_9_Create(CAN_HandleTypeDef* hcan, uint8_t can_id, float kt, float dir, float position_offset_deg, \
                                         float low_pass_filter_cut_off_frequency, float low_pass_filter_time_duration, \
                                         float butterworth_filter_a2, float butterworth_filter_a3, \
                                         float butterworth_filter_b1, float butterworth_filter_b2, float butterworth_filter_b3)
@@ -23,7 +23,7 @@ AK10_9HandleCubeMarsFW AK10_9_Create(CAN_HandleTypeDef* hcan, uint8_t can_id, fl
   hmotor.status = AK10_9_Offline;
   hmotor.kt = kt;
   hmotor.accAvgPtr = 0;
-  hmotor.posOffsetDeg = 0.0f;
+  hmotor.posOffsetDeg = position_offset_deg;
   hmotor.posOffsetRad = hmotor.posOffsetDeg * deg2rad;
   hmotor.posDirectionCorrection = dir;
   hmotor.setPos.f = 0.0f;
@@ -242,7 +242,7 @@ void AK10_9_MITMode_EnableMotor(AK10_9HandleCubeMarsFW* hmotor)
   hmotor->txBuf[7] = 0xFC;
   HAL_CAN_AddTxMessage(hmotor->hcan, &(hmotor->txHeader), hmotor->txBuf, &(hmotor->txMailbox));
   
-  AK10_9_CubeMarsFW_MITMode_ZeroingControlParameters(hmotor);
+  AK10_9_MITMode_ZeroingControlParameters(hmotor);
   hmotor->enablingStatus = AK10_9_MITMODE_ENABLED;
 }
 void AK10_9_MITMode_DisableMotor(AK10_9HandleCubeMarsFW* hmotor)
@@ -261,7 +261,7 @@ void AK10_9_MITMode_DisableMotor(AK10_9HandleCubeMarsFW* hmotor)
   hmotor->txBuf[7] = 0xFD;
   HAL_CAN_AddTxMessage(hmotor->hcan, &(hmotor->txHeader), hmotor->txBuf, &(hmotor->txMailbox));
   
-  AK10_9_CubeMarsFW_MITMode_ZeroingControlParameters(hmotor);
+  AK10_9_MITMode_ZeroingControlParameters(hmotor);
   hmotor->enablingStatus = AK10_9_MITMODE_DISABLED;
 }
 
@@ -282,7 +282,7 @@ void AK10_9_MITMode_Zeroing(AK10_9HandleCubeMarsFW* hmotor)
   HAL_CAN_AddTxMessage(hmotor->hcan, &(hmotor->txHeader), hmotor->txBuf, &(hmotor->txMailbox));
 }
 
-void AK10_9_CubeMarsFW_MITMode_ZeroingControlParameters(AK10_9HandleCubeMarsFW* hmotor)
+void AK10_9_MITMode_ZeroingControlParameters(AK10_9HandleCubeMarsFW* hmotor)
 {
   hmotor->setPos.f = 0.0f;
   hmotor->goalPos.f = 0.0f;
@@ -384,7 +384,7 @@ void AK10_9_MITMode_GetFeedbackMsg(CAN_RxHeaderTypeDef* rxheader, AK10_9HandleCu
   hmotor->lastReceivedTime = HAL_GetTick();
 }
 
-void AK10_9_CubeMarsFW_MotorStatusMonitor(AK10_9HandleCubeMarsFW* hmotor, uint32_t timeout_ms)
+void AK10_9_MotorStatusMonitor(AK10_9HandleCubeMarsFW* hmotor, uint32_t timeout_ms)
 {
   if ((HAL_GetTick() - hmotor->lastReceivedTime) > timeout_ms)
     hmotor->status = AK10_9_Offline;
@@ -392,9 +392,9 @@ void AK10_9_CubeMarsFW_MotorStatusMonitor(AK10_9HandleCubeMarsFW* hmotor, uint32
     hmotor->status = AK10_9_Online;
 }
 
-void AK10_9_CubeMarsFW_MITMode_ContinuousControlManager(AK10_9HandleCubeMarsFW* hmotor, \
+void AK10_9_MITMode_ContinuousControlManager(AK10_9HandleCubeMarsFW* hmotor, \
                                                  float pos_slope, float vel_slope, float iq_slope, \
-                                                 float kp_slope, float kd_slope, float loop_duration_ms)
+                                                 float kp_slope, float kd_slope, float loop_duration_sec)
 {
   if (hmotor->enablingStatus == AK10_9_MITMODE_ENABLED)
   {
@@ -405,27 +405,27 @@ void AK10_9_CubeMarsFW_MITMode_ContinuousControlManager(AK10_9HandleCubeMarsFW* 
     float diff_iq =  hmotor->goalIq.f - hmotor->setIq.f, abs_diff_iq = fabs(diff_iq);
     /* Position smoother */
     if (fabs(diff_pos) > 10.0f)//10 Deg
-      hmotor->setPos.f += (diff_pos / abs_diff_pos) * pos_slope * loop_duration_ms;
+      hmotor->setPos.f += (diff_pos / abs_diff_pos) * pos_slope * loop_duration_sec;
     else
       hmotor->setPos.f = hmotor->goalPos.f;
     /* Velocity smoother */
     if (fabs(diff_vel) > 10.0f)//10 Deg/sec
-      hmotor->setVel.f += (diff_vel / abs_diff_vel) * vel_slope * loop_duration_ms;
+      hmotor->setVel.f += (diff_vel / abs_diff_vel) * vel_slope * loop_duration_sec;
     else
       hmotor->setVel.f = hmotor->goalVel.f;
     /* Iq smoother */
     if (fabs(diff_iq) > 1.0f)//1 Deg/sec
-      hmotor->setIq.f += (diff_iq / abs_diff_iq) * iq_slope * loop_duration_ms;
+      hmotor->setIq.f += (diff_iq / abs_diff_iq) * iq_slope * loop_duration_sec;
     else
       hmotor->setIq.f = hmotor->goalIq.f;
     /* Kp smoother */
     if (fabs(diff_kp) > 1.0f)
-      hmotor->setKp.f += (diff_kp / abs_diff_kp) * kp_slope * loop_duration_ms;
+      hmotor->setKp.f += (diff_kp / abs_diff_kp) * kp_slope * loop_duration_sec;
     else
       hmotor->setKp.f = hmotor->goalKp.f;
     /* Kd smoother */
     if (fabs(diff_kd) > 1.0f)
-      hmotor->setKd.f += (diff_kd / abs_diff_kd) * kd_slope * loop_duration_ms;
+      hmotor->setKd.f += (diff_kd / abs_diff_kd) * kd_slope * loop_duration_sec;
     else
       hmotor->setKd.f = hmotor->goalKd.f;
 
@@ -436,7 +436,7 @@ void AK10_9_CubeMarsFW_MITMode_ContinuousControlManager(AK10_9HandleCubeMarsFW* 
   }
 }
 
-void AK10_9_CubaMarsFW_MITMode_ContinuousControl_Deg(AK10_9HandleCubeMarsFW* hmotor, float goal_pos, float goal_vel, \
+void AK10_9_MITMode_ContinuousControl_Deg(AK10_9HandleCubeMarsFW* hmotor, float goal_pos, float goal_vel, \
                                                  float goal_kp, float goal_kd, float goal_iq)
 {
   hmotor->goalPos.f = goal_pos;
@@ -457,10 +457,10 @@ void AK10_9_CubaMarsFW_MITMode_ContinuousControl_Deg(AK10_9HandleCubeMarsFW* hmo
     hmotor->ifMITModeParameterSmootherWorkFinished = 0;
 }
 
-void AK10_9_CubaMarsFW_MITMode_ContinuousControlWithOffset_Deg(AK10_9HandleCubeMarsFW* hmotor, float goal_pos, float goal_vel, \
+void AK10_9_MITMode_ContinuousControlWithOffset_Deg(AK10_9HandleCubeMarsFW* hmotor, float goal_pos, float goal_vel, \
                                                                float goal_kp, float goal_kd, float goal_iq)
 {
-  AK10_9_CubaMarsFW_MITMode_ContinuousControl_Deg(hmotor, goal_pos + hmotor->posOffsetDeg, goal_vel, goal_kp, goal_kd, goal_iq);
+  AK10_9_MITMode_ContinuousControl_Deg(hmotor, goal_pos + hmotor->posOffsetDeg, goal_vel, goal_kp, goal_kd, goal_iq);
 }
 
 uint16_t FloatToUint(float x, float x_min, float x_max, uint16_t bits)
