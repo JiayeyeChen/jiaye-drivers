@@ -48,6 +48,8 @@ void HWT605_GetFeedback(HWT605Handle* himu, CAN_RxHeaderTypeDef* rxheader, uint8
 		himu->AccZ.f = himu->rotCalibMatrixS31 * (himu->rawAccX.f - himu->biasCalibBX) + \
 									 himu->rotCalibMatrixS32 * (himu->rawAccY.f - himu->biasCalibBY) + \
 									 himu->rotCalibMatrixS33 * (himu->rawAccZ.f - himu->biasCalibBZ);
+		himu->pitch.f = atanf(himu->AccZ.f / himu->AccY.f) * rad2deg;
+		himu->yaw.f = atanf(himu->AccZ.f / himu->AccX.f) * rad2deg;
 		himu->feedbackCounter += 0.005f;
 	}
 	else if (rxbuf[1] == HWT605CAN_DATATYPE_GYRO)

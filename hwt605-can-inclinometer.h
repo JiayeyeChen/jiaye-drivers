@@ -2,6 +2,7 @@
 #define HWT605_CAN_INCLINOMETER_H
 
 #include "common.h"
+#include <math.h>
 
 #define					HWT605CAN_REG_SAVE 					  0x00
 #define					HWT605CAN_REG_CALSW 					0x01
@@ -121,10 +122,14 @@ typedef struct
 	union FloatUInt8			AccX;
 	union FloatUInt8			AccY;
 	union FloatUInt8			AccZ;
+	union FloatUInt8			pitch;
+	union FloatUInt8			yaw;
 	float									rotCalibMatrixS11, rotCalibMatrixS12, rotCalibMatrixS13, \
 												rotCalibMatrixS21, rotCalibMatrixS22, rotCalibMatrixS23, \
 												rotCalibMatrixS31, rotCalibMatrixS32, rotCalibMatrixS33;
 	float									biasCalibBX, biasCalibBY, biasCalibBZ;
+	
+	
 }HWT605Handle;
 
 HWT605Handle HWT605_Create(CAN_HandleTypeDef* hcan, uint8_t can_id, float calib_s11, float calib_s12, float calib_s13, \
