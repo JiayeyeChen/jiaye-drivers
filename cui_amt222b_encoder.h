@@ -6,6 +6,7 @@
 typedef struct
 {
 	SPI_HandleTypeDef*    hspi;                /* The SPI port for this instance. */
+	TIM_HandleTypeDef*		htim;
 	union UInt16UInt8			angleBit;
 	float									angleDeg;
   float                 angleRad;
@@ -19,18 +20,16 @@ typedef struct
 }CUIAMT222BHandle;
 
 
-CUIAMT222BHandle CUI_AMT222b_Create(SPI_HandleTypeDef* hspi, GPIO_TypeDef* cs_port, uint16_t cs_pin, float angle_offset);
-
-uint32_t DWT_Delay_Init(void);
+CUIAMT222BHandle CUI_AMT222b_Create(SPI_HandleTypeDef* hspi, TIM_HandleTypeDef* htim, GPIO_TypeDef* cs_port, uint16_t cs_pin, float angle_offset);
 
 void CUI_AMT222b_Read(CUIAMT222BHandle* hcui);
 
+uint32_t DWT_Delay_Init(void);
 
 void CUI_AMT222b_Get_Angle(CUIAMT222BHandle* hcui);
 
 
 void CUI_AMT222b_Set_ZeroPosition(CUIAMT222BHandle* hcui);
-
 
 __STATIC_INLINE void DWT_Delay_us(volatile uint32_t microseconds)
 {
